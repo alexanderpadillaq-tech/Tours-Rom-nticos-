@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototipo Interactivo — Tours Románticos</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- QR Code Generator Library (QRious) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            burgundy: {
+              DEFAULT: '#7A1C33',
+              dark: '#5E1326',
+              light: '#9E2A47',
+              soft: '#F5E4E8',
+              border: '#D9A7B3',
+            },
+            cream: {
+              DEFAULT: '#FAF3F4',
+              card: '#FDF9FA',
+              warm: '#F6E8EB',
+            },
+            ink: {
+              DEFAULT: '#2B0B13',
+              muted: '#6E4752',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Estilos personalizados para fidelidad wireframe limpio y tacto móvil */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #EFE8EA;
+      color: #2B0B13;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Scrollbar sutil dentro de la pantalla del teléfono */
+    .phone-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .phone-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .phone-scroll::-webkit-scrollbar-thumb {
+      background: rgba(122, 28, 51, 0.2);
+      border-radius: 9999px;
+    }
+
+    /* Marco del teléfono móvil */
+    .phone-chassis {
+      box-shadow:
+        0 25px 60px -15px rgba(43, 11, 19, 0.28),
+        0 0 0 10px #2B0B13,
+        0 0 0 12px #5E1326;
+    }
+
+    /* Animaciones suaves de transición entre pantallas */
+    .screen-enter {
+      animation: fadeSlideUp 0.22s ease-out forwards;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Modo Proyección / Pantalla Limpia */
+    body.presentation-clean .presenter-panel {
+      display: none !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between selection:bg-burgundy selection:text-white">
+
+  <!-- =====================================================================
+       BARRA SUPERIOR DISCRETA DE PRESENTACIÓN (EXPO FÍSICA & DIAPOSITIVAS)
+       ===================================================================== -->
+  <header class="w-full bg-white/90 backdrop-blur-md border-b border-burgundy/15 px-3 sm:px-6 py-2.5 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- Identificador de Proyecto -->
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-burgundy text-white font-bold text-sm shadow-sm">
+          ♥
+        </span>
+        <div>
+          <h1 class="text-xs sm:text-sm font-bold text-ink leading-tight">
+            Tours Románticos — Prototipo Interactivo
+          </h1>
+          <p class="text-[11px] text-ink-muted hidden sm:block">
+            Baja/Media Fidelidad • Haz clic en los elementos dentro del teléfono para navegar
+          </p>
+        </div>
+      </div>
+
+      <!-- Saltos rápidos de pantalla (útil durante la exposición oral) -->
+      <div class="hidden lg:flex items-center gap-1.5 bg-cream p-1 rounded-xl border border-burgundy/20">
+        <button onclick="navigateTo('explorar')" id="quick-explorar" class="quick-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">
+          1. Descubre
+        </button>
+        <button onclick="navigateTo('personaliza')" id="quick-personaliza" class="quick-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">
+          2. Personaliza
+        </button>
+        <button onclick="navigateTo('confirma')" id="quick-confirma" class="quick-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">
+          3. Confirma
+        </button>
+        <button onclick="navigateTo('envivo')" id="quick-envivo" class="quick-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">
+          4. En Vivo
+        </button>
+      </div>
+
+      <!-- Botones de Herramientas de Exposición Física -->
+      <div class="flex items-center gap-2">
+        <button
+          onclick="openModal('qrModal')"
+          class="inline-flex items-center gap-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm transition active:scale-95"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2zm-2-2h2v2h-2v-2z" />
+          </svg>
+          <span>QR en Vivo</span>
+        </button>
+
+        <button
+          onclick="openModal('guideModal')"
+          class="inline-flex items-center gap-1.5 bg-cream hover:bg-burgundy-soft text-burgundy border border-burgundy/30 text-xs font-semibold px-3 py-2 rounded-xl transition active:scale-95"
+        >
+          <span>📋 Guía Físico + Digital</span>
+        </button>
+
+        <button
+          onclick="toggleCleanMode()"
+          title="Ocultar/Mostrar panel lateral para proyectar solo el teléfono"
+          class="hidden md:inline-flex items-center gap-1 bg-white hover:bg-cream text-ink-muted border border-burgundy/20 text-xs font-medium px-2.5 py-2 rounded-xl transition"
+        >
+          <span id="cleanModeLabel">Modo Proyector</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       CONTENEDOR PRINCIPAL: TELÉFONO EN EL CENTRO + PANEL DISCRETO DE APOYO
+       ===================================================================== -->
+  <main class="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10">
+
+    <!-- MARCO DE TELÉFONO MÓVIL INTERACTIVO (CENTRO) -->
+    <section aria-label="Prototipo Móvil Interactivo" class="flex flex-col items-center">
+      <div class="phone-chassis relative w-[355px] sm:w-[375px] h-[740px] sm:h-[765px] bg-cream rounded-[42px] overflow-hidden flex flex-col select-none">
+
+        <!-- BARRA DE ESTADO + DYNAMIC ISLAND -->
+        <div class="pt-3 pb-2 px-6 flex items-center justify-between bg-cream z-20 shrink-0">
+          <span id="statusBarTime" class="text-[13px] font-bold tracking-tight text-ink">9:41</span>
+          <!-- Dynamic Island -->
+          <div class="w-24 h-5 bg-ink rounded-full flex items-center justify-end px-2 shadow-inner">
+            <span class="w-2 h-2 rounded-full bg-burgundy-light/60"></span>
+          </div>
+          <!-- Señal y Batería -->
+          <span class="text-[12px] font-bold tracking-tight text-ink">5G • 100%</span>
+        </div>
+
+        <!-- ÁREA DINÁMICA DE PANTALLAS -->
+        <div id="phoneViewport" class="flex-1 overflow-y-auto phone-scroll px-4 pb-3 flex flex-col">
+          <!-- El contenido de cada pantalla se renderiza dinámicamente aquí -->
+        </div>
+
+        <!-- NAVEGACIÓN INFERIOR FIJA (EN LAS 4 PANTALLAS Y PERFIL) -->
+        <nav aria-label="Navegación Principal App" class="bg-cream-card border-t border-burgundy/20 px-3 py-2.5 shrink-0 z-20">
+          <div class="grid grid-cols-4 gap-1 text-center">
+            <button onclick="navigateTo('explorar')" id="nav-explorar" class="nav-tab flex flex-col items-center justify-center py-1 rounded-xl text-[13px] transition">
+              <span>Explorar</span>
+              <span class="nav-line h-[2px] w-10 mt-0.5 rounded-full bg-transparent"></span>
+            </button>
+            <button onclick="navigateTo('personaliza')" id="nav-armar" class="nav-tab flex flex-col items-center justify-center py-1 rounded-xl text-[13px] transition">
+              <span>Armar</span>
+              <span class="nav-line h-[2px] w-10 mt-0.5 rounded-full bg-transparent"></span>
+            </button>
+            <button onclick="navigateTo('envivo')" id="nav-mistours" class="nav-tab flex flex-col items-center justify-center py-1 rounded-xl text-[13px] transition">
+              <span>Mis Tours</span>
+              <span class="nav-line h-[2px] w-12 mt-0.5 rounded-full bg-transparent"></span>
+            </button>
+            <button onclick="navigateTo('perfil')" id="nav-perfil" class="nav-tab flex flex-col items-center justify-center py-1 rounded-xl text-[13px] transition">
+              <span>Perfil</span>
+              <span class="nav-line h-[2px] w-8 mt-0.5 rounded-full bg-transparent"></span>
+            </button>
+          </div>
+          <!-- Home Indicator Bar estilo iOS -->
+          <div class="mt-1.5 flex justify-center">
+            <div class="w-28 h-1 bg-ink/25 rounded-full"></div>
+          </div>
+        </nav>
+
+        <!-- TOAST / NOTIFICACIÓN INTERNA DENTRO DEL TELÉFONO -->
+        <div id="phoneToast" class="pointer-events-none opacity-0 transition-all duration-200 absolute bottom-20 left-4 right-4 bg-ink text-white text-xs font-medium px-3.5 py-2.5 rounded-2xl shadow-lg flex items-center gap-2 z-30">
+          <span class="text-burgundy-border">♥</span>
+          <span id="phoneToastMsg">Acción actualizada</span>
+        </div>
+
+        <!-- MODAL INTERNO DENTRO DEL TELÉFONO (WHATSAPP / CONCIERGE / EDITAR PIN / FILTROS) -->
+        <div id="phoneInnerModal" class="hidden absolute inset-0 bg-ink/50 backdrop-blur-[2px] z-40 flex items-end justify-center p-3">
+          <div id="phoneInnerModalContent" class="w-full bg-cream-card border border-burgundy/30 rounded-3xl p-4 shadow-2xl screen-enter">
+            <!-- Contenido dinámico del modal móvil -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         PANEL DISCRETO DE APOYO PARA EXPOSICIÓN (GUIÓN Y CONEXIÓN FÍSICA)
+         ===================================================================== -->
+    <aside class="presenter-panel w-full max-w-md bg-white/95 border border-burgundy/20 rounded-3xl p-5 shadow-md space-y-4">
+      <div class="flex items-center justify-between border-b border-burgundy/15 pb-3">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-burgundy">Guión de Exposición</span>
+          <h2 id="presenterScreenTitle" class="text-base font-bold text-ink">1. Pantalla Descubre (Explorar)</h2>
+        </div>
+        <span id="presenterStepBadge" class="bg-burgundy-soft text-burgundy text-xs font-bold px-2.5 py-1 rounded-full">
+          Paso 1 / 4
+        </span>
+      </div>
+
+      <!-- Qué explicar al jurado / público en esta pantalla -->
+      <div class="bg-cream rounded-2xl p-3.5 border border-burgundy/15 space-y-2">
+        <p class="text-xs font-bold text-burgundy flex items-center gap-1.5">
+          <span>🎤</span> Qué decir al presentar esta pantalla:
+        </p>
+        <p id="presenterPitchText" class="text-xs text-ink leading-relaxed">
+          "Aquí el usuario descubre experiencias románticas filtradas por ocasión y ciudad sin estrés de planificación. Puede explorar miradores, cenas o pedidas con precios claros desde el inicio."
+        </p>
+      </div>
+
+      <!-- Interacciones clave que puedes demostrar en vivo -->
+      <div class="space-y-1.5">
+        <p class="text-xs font-bold text-ink">👆 Interacciones en vivo para probar:</p>
+        <ul id="presenterActionsList" class="text-xs text-ink-muted space-y-1 list-disc pl-4">
+          <li>Cambia la ciudad en <b>Tu Ciudad ▾</b> (Quito, Cuenca, Guayaquil, Baños).</li>
+          <li>Toca los chips <b>Miradores, Cenas, Picnic, Pedidas</b> para filtrar tours.</li>
+          <li>Presiona <b>Explorar "Noche Estrellada" →</b> para avanzar.</li>
+        </ul>
+      </div>
+
+      <!-- Conexión rápida con tu maqueta / material físico -->
+      <div class="bg-burgundy-soft/70 border border-burgundy/25 rounded-2xl p-3.5 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-burgundy">🔗 Puente Físico ↔ Digital</span>
+          <button onclick="openModal('qrModal')" class="text-[11px] font-bold underline text-burgundy hover:text-burgundy-dark">
+            Abrir QR para imprimir
+          </button>
+        </div>
+        <p class="text-[11px] text-ink leading-relaxed">
+          Imprime el <b>Código QR</b> y colócalo sobre una tarjeta física de invitación o maqueta de mesa romántica. Cuando el jurado escanee el QR con su celular, abrirá exactamente este prototipo táctil.
+        </p>
+      </div>
+
+      <!-- Botones Siguiente / Anterior para avanzar durante la exposición -->
+      <div class="flex items-center justify-between pt-1 gap-2">
+        <button onclick="stepScreen(-1)" class="flex-1 py-2 px-3 rounded-xl border border-burgundy/30 text-xs font-semibold text-burgundy hover:bg-cream transition">
+          ← Pantalla Anterior
+        </button>
+        <button onclick="stepScreen(1)" class="flex-1 py-2 px-3 rounded-xl bg-burgundy text-white text-xs font-semibold hover:bg-burgundy-dark transition shadow-sm">
+          Siguiente Pantalla →
+        </button>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- =====================================================================
+       MODAL EXTERNO 1: GENERADOR DE CÓDIGO QR ESCANEABLE EN VIVO
+       ===================================================================== -->
+  <div id="qrModal" class="hidden fixed inset-0 bg-ink/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-burgundy/25 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 screen-enter">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-burgundy text-white flex items-center justify-center text-xs font-bold">QR</span>
+          <h3 class="text-base font-bold text-ink">Código QR para Exposición Física</h3>
+        </div>
+        <button onclick="closeModal('qrModal')" class="w-8 h-8 rounded-full bg-cream text-ink hover:bg-burgundy-soft flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <p class="text-xs text-ink-muted leading-relaxed">
+        Escanea este código con la cámara de cualquier teléfono para abrir el prototipo móvil, o ingresa el enlace donde alojes este archivo para actualizar el QR al instante.
+      </p>
+
+      <!-- Canvas del Código QR -->
+      <div class="flex flex-col items-center justify-center bg-cream border-2 border-dashed border-burgundy/30 rounded-2xl p-5">
+        <canvas id="qrCanvas" class="rounded-xl bg-white p-2 shadow-sm"></canvas>
+        <span class="mt-2.5 text-[11px] font-bold text-burgundy tracking-wide">
+          ♥ ESCANEA Y ARMA TU VELADA ROMÁNTICA
+        </span>
+      </div>
+
+      <!-- Campo editable por si lo suben a Netlify/GitHub Pages/Drive -->
+      <div class="space-y-1.5">
+        <label for="qrUrlInput" class="block text-[11px] font-bold text-ink">
+          URL del prototipo (editable si lo subes a internet):
+        </label>
+        <div class="flex gap-2">
+          <input
+            id="qrUrlInput"
+            type="text"
+            oninput="generateQRCode(this.value)"
+            class="flex-1 text-xs bg-cream border border-burgundy/25 rounded-xl px-3 py-2 text-ink focus:outline-none focus:border-burgundy"
+            placeholder="https://tu-proyecto-tours.netlify.app"
+          />
+          <button onclick="downloadQR()" class="bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold px-3 py-2 rounded-xl transition shrink-0">
+            Descargar PNG
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-burgundy-soft/60 rounded-xl p-3 text-[11px] text-ink">
+        <b>Tip para tu mesa física:</b> Descarga el PNG, imprímelo en una tarjeta tamaño postal con borde borgoña y pégalo junto a una vela LED o tarjeta de reserva física.
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL EXTERNO 2: GUÍA RÁPIDA FÍSICO + DIGITAL PARA EXPOSICIÓN
+       ===================================================================== -->
+  <div id="guideModal" class="hidden fixed inset-0 bg-ink/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-burgundy/25 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto screen-enter">
+      <div class="flex items-center justify-between border-b border-burgundy/15 pb-3">
+        <h3 class="text-base font-bold text-ink">🎯 Cómo unir lo Físico + Digital en tu Expo</h3>
+        <button onclick="closeModal('guideModal')" class="w-8 h-8 rounded-full bg-cream text-ink hover:bg-burgundy-soft flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs text-ink leading-relaxed">
+        <div class="bg-cream p-3.5 rounded-2xl border border-burgundy/15">
+          <p class="font-bold text-burgundy mb-1">1. El Kit Físico en la Mesa ("Caja de Experiencia")</p>
+          <p>Prepara una caja elegante en tonos crema y borgoña con 3 elementos físicos reales: <b>(a)</b> Una tarjeta de invitación impresa con el Código QR, <b>(b)</b> Un pequeño frasco/sobre con pétalos o vela LED, y <b>(c)</b> Un "Pase de Abordaje VIP" impreso que simula el voucher final.</p>
+        </div>
+
+        <div class="bg-cream p-3.5 rounded-2xl border border-burgundy/15">
+          <p class="font-bold text-burgundy mb-1">2. El Puente Interactivo (El Celular / Proyector)</p>
+          <p>Mientras muestras las diapositivas de tu modelo de negocio, invita al evaluador a escanear el QR (o usa este teléfono interactivo en pantalla) para elegir su tour, activar toggles de cena/fotos y ver cómo el precio se actualiza al instante.</p>
+        </div>
+
+        <div class="bg-cream p-3.5 rounded-2xl border border-burgundy/15">
+          <p class="font-bold text-burgundy mb-1">3. Cierre "En Vivo" (Diferenciador clave)</p>
+          <p>Termina la demo haciendo clic en <b>"Reservar Velada en 1 Toque"</b> para mostrar la pantalla <b>En Vivo (19:22)</b> con el chofer a 1.2 km. Explica que la app elimina la ansiedad logística de organizar una cita especial.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closeModal('guideModal')" class="bg-burgundy text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-burgundy-dark transition">
+          Entendido, volver al prototipo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       LÓGICA INTERACTIVA DE LA APLICACIÓN MÓVIL
+       ===================================================================== -->
+  <script>
+    // Estado global del prototipo
+    const appState = {
+      currentScreen: 'explorar', // 'explorar' | 'personaliza' | 'confirma' | 'envivo' | 'perfil'
+      city: 'Tu Ciudad',
+      cities: ['Tu Ciudad', 'Quito', 'Cuenca', 'Guayaquil', 'Baños'],
+      cityMenuOpen: false,
+      activeCategory: 'Miradores',
+      searchOccasion: '',
+      selectedTourId: 'noche-estrellada',
+      // Tours disponibles por categoría (incluyendo los exactos de la imagen)
+      tours: [
+        {
+          id: 'noche-estrellada',
+          category: 'Miradores',
+          title: 'Noche Estrellada VIP',
+          subtitle: 'Chofer + cena velas + flores',
+          rating: '4.9',
+          reviews: 42,
+          basePrice: 65,
+          duration: '4 hrs',
+          ctaLabel: 'Explorar "Noche Estrellada" →',
+          sceneType: 'mirador'
+        },
+        {
+          id: 'picnic-bohemio',
+          category: 'Picnic',
+          title: 'Picnic Bohemio & Rosas',
+          subtitle: 'Montaje completo + brindis',
+          rating: '4.8',
+          reviews: 29,
+          basePrice: 45,
+          duration: '3 hrs',
+          ctaLabel: 'Explorar "Picnic Bohemio" →',
+          sceneType: 'picnic'
+        },
+        {
+          id: 'cena-azotea',
+          category: 'Cenas',
+          title: 'Cena Privada en Azotea',
+          subtitle: 'Mesa exclusiva + violinista + vino',
+          rating: '4.9',
+          reviews: 36,
+          basePrice: 75,
+          duration: '3.5 hrs',
+          ctaLabel: 'Explorar "Cena en Azotea" →',
+          sceneType: 'cena'
+        },
+        {
+          id: 'pedida-secreta',
+          category: 'Pedidas',
+          title: 'Pedida de Mano Secreta',
+          subtitle: 'Letrero iluminado + fotógrafo + champán',
+          rating: '5.0',
+          reviews: 51,
+          basePrice: 120,
+          duration: '4 hrs',
+          ctaLabel: 'Explorar "Pedida Secreta" →',
+          sceneType: 'pedida'
+        }
+      ],
+      // Toggles de Pantalla 2 ('Personaliza')
+      addons: {
+        transport: true,   // SÍ por defecto (+$15)
+        decor: true,       // SÍ por defecto (Incluido)
+        dinner: true,      // SÍ por defecto (Incluido)
+        photos: false      // NO por defecto (+$15 al activar)
+      },
+      date: 'Sáb 21 Nov',
+      datesList: ['Sáb 21 Nov', 'Dom 22 Nov', 'Vie 27 Nov', 'Sáb 28 Nov'],
+      time: '19:30',
+      timesList: ['18:30', '19:30', '20:30', '21:00'],
+      pickupAddress: 'Av. Principal #123',
+      // Estado interactivo del timeline en Pantalla 4 ('En Vivo')
+      liveStepIndex: 1 // 0: Recogida, 1: Llegada a Mirador (activo por defecto como en la imagen), 2: Cena, 3: Regreso
+    };
+
+    // Guión del panel lateral según la pantalla activa
+    const presenterNotes = {
+      explorar: {
+        title: '1. Pantalla Descubre (Explorar)',
+        badge: 'Paso 1 / 4',
+        pitch: '"Aquí el usuario descubre experiencias románticas curadas según la ocasión y ciudad. Puede filtrar por Miradores, Cenas, Picnic o Pedidas con precios transparentes desde el primer vistazo."',
+        actions: [
+          'Haz clic en <b>Tu Ciudad ▾</b> para cambiar entre Quito, Cuenca, Guayaquil o Baños.',
+          'Toca los chips <b>Miradores, Cenas, Picnic, Pedidas</b> para filtrar.',
+          'Presiona el botón <b>Explorar "Noche Estrellada" →</b> para ir al configurador.'
+        ]
+      },
+      personaliza: {
+        title: '2. Pantalla Personaliza (Paso 2 de 3)',
+        badge: 'Paso 2 / 4',
+        pitch: '"El cliente arma la atmósfera a su medida con interruptores SÍ/NO. Observa cómo al activar la Sesión de Fotos (+$15), el botón inferior recalcula el total de $80 a $95 en tiempo real."',
+        actions: [
+          'Activa el toggle <b>Sesión de Fotos (15 min)</b> de NO a SÍ (+$15).',
+          'Cambia la <b>Fecha</b> o la <b>Hora cita</b> tocando sus cajas.',
+          'Haz clic en <b>Ver mi Velada Lista →</b> para revisar el resumen.'
+        ]
+      },
+      confirma: {
+        title: '3. Pantalla Confirma (Paso 3 de 3)',
+        badge: 'Paso 3 / 4',
+        pitch: '"Transparencia total antes de reservar: desglose sincronizado, ubicación GPS editable para el chofer privado y reserva en un solo toque o contacto directo por WhatsApp."',
+        actions: [
+          'Toca <b>[Ajustar pin]</b> para editar la dirección de recogida GPS.',
+          'Prueba el botón <b>Personalizar detalle por WhatsApp</b>.',
+          'Pulsa <b>✓ Reservar Velada en 1 Toque</b> para pasar al seguimiento en vivo.'
+        ]
+      },
+      envivo: {
+        title: '4. Pantalla En Vivo (Mis Tours)',
+        badge: 'Paso 4 / 4',
+        pitch: '"Nuestro gran diferenciador: seguimiento en tiempo real el día de la cita. El usuario sabe exactamente dónde viene su chofer y cada etapa se ejecuta sin que tenga que preocuparse por nada."',
+        actions: [
+          'Haz clic sobre los pasos del itinerario (<b>19:30, 20:00, 21:15, 23:30</b>) para simular el avance en vivo.',
+          'Toca <b>Asistencia Concierge Romántico 24/7</b> para abrir el soporte instantáneo.'
+        ]
+      },
+      perfil: {
+        title: 'Vista Complementaria: Perfil',
+        badge: 'Extra',
+        pitch: '"Completa la experiencia de usuario con preferencias de pareja, fechas importantes guardadas (aniversarios) y métodos de pago rápidos."',
+        actions: [
+          'Usa la barra inferior del teléfono para volver a <b>Explorar</b> o <b>Armar</b>.'
+        ]
+      }
+    };
+
+    // Helper: Obtener el tour actualmente seleccionado
+    function getSelectedTour() {
+      return appState.tours.find(t => t.id === appState.selectedTourId) || appState.tours[0];
+    }
+
+    // Helper: Calcular precio total dinámico
+    function calculateTotal() {
+      const tour = getSelectedTour();
+      let total = tour.basePrice;
+      if (appState.addons.transport) total += 15;
+      if (appState.addons.photos) total += 15;
+      return total;
+    }
+
+    // Ilustraciones SVG estilizadas de baja/media fidelidad para las tarjetas
+    function getSceneIllustration(type) {
+      if (type === 'mirador') {
+        return `
+          <svg viewBox="0 0 400 110" class="w-full h-24 object-cover rounded-xl bg-[#2A1B2E]" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="skyMirador" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1E162B"/>
+                <stop offset="65%" stop-color="#5E273B"/>
+                <stop offset="100%" stop-color="#C97A63"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="110" fill="url(#skyMirador)"/>
+            <!-- Estrellas -->
+            <circle cx="45" cy="20" r="1.5" fill="#FFF7E8" opacity="0.9"/>
+            <circle cx="110" cy="14" r="1.2" fill="#FFF7E8" opacity="0.7"/>
+            <circle cx="290" cy="18" r="1.8" fill="#FFF7E8" opacity="0.9"/>
+            <circle cx="350" cy="26" r="1.3" fill="#FFF7E8" opacity="0.8"/>
+            <circle cx="200" cy="12" r="2" fill="#FDE68A"/>
+            <!-- Montañas -->
+            <polygon points="0,85 85,42 175,85" fill="#231424" opacity="0.85"/>
+            <polygon points="130,85 235,36 340,85" fill="#1A0E1B" opacity="0.9"/>
+            <polygon points="270,85 355,48 400,85" fill="#29162B"/>
+            <!-- Baranda mirador y luces cálidas -->
+            <line x1="0" y1="84" x2="400" y2="84" stroke="#FBBF24" stroke-width="1.5" stroke-dasharray="4 6"/>
+            <circle cx="95" cy="84" r="3" fill="#FDE68A"/>
+            <circle cx="155" cy="84" r="3" fill="#FDE68A"/>
+            <circle cx="245" cy="84" r="3" fill="#FDE68A"/>
+            <circle cx="310" cy="84" r="3" fill="#FDE68A"/>
+            <!-- Mesa romántica y pareja silueta -->
+            <rect x="178" y="76" width="44" height="34" rx="4" fill="#3B121E"/>
+            <circle cx="170" cy="64" r="7" fill="#18090E"/>
+            <path d="M158,95 Q170,72 182,95" fill="#18090E"/>
+            <circle cx="230" cy="65" r="6.5" fill="#18090E"/>
+            <path d="M218,95 Q230,73 242,95" fill="#18090E"/>
+            <!-- Vela en mesa -->
+            <rect x="198" y="69" width="4" height="7" fill="#FFF"/>
+            <circle cx="200" cy="66" r="3" fill="#FBBF24"/>
+          </svg>
+        `;
+      }
+      if (type === 'picnic') {
+        return `
+          <svg viewBox="0 0 400 110" class="w-full h-24 object-cover rounded-xl bg-[#4E6844]" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="grassGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#8FA876"/>
+                <stop offset="45%" stop-color="#5B7847"/>
+                <stop offset="100%" stop-color="#3A522B"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="110" fill="url(#grassGrad)"/>
+            <!-- Luz dorada de tarde -->
+            <circle cx="330" cy="24" r="26" fill="#FDE68A" opacity="0.35"/>
+            <!-- Manta de picnic -->
+            <polygon points="105,98 145,56 265,56 305,98" fill="#FAF3F4" stroke="#7A1C33" stroke-width="2"/>
+            <!-- Cesta de mimbre -->
+            <rect x="148" y="45" width="32" height="22" rx="5" fill="#B47B49"/>
+            <path d="M152,45 Q164,28 176,45" fill="none" stroke="#8C582B" stroke-width="2.5"/>
+            <!-- Ramo de rosas -->
+            <circle cx="205" cy="65" r="10" fill="#7A1C33"/>
+            <circle cx="199" cy="62" r="5" fill="#BE3455"/>
+            <circle cx="210" cy="63" r="5" fill="#9E2A47"/>
+            <!-- Farol cálido -->
+            <rect x="236" y="46" width="16" height="24" rx="4" fill="#FBBF24" stroke="#5E1326" stroke-width="1.5"/>
+          </svg>
+        `;
+      }
+      if (type === 'cena') {
+        return `
+          <svg viewBox="0 0 400 110" class="w-full h-24 object-cover rounded-xl bg-[#3B1322]" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="110" fill="#2E0F1B"/>
+            <circle cx="200" cy="30" r="45" fill="#7A1C33" opacity="0.45"/>
+            <!-- Luces colgantes -->
+            <path d="M0,15 Q200,42 400,15" fill="none" stroke="#FDE68A" stroke-width="1.2"/>
+            <circle cx="80" cy="24" r="3.5" fill="#FDE68A"/>
+            <circle cx="150" cy="29" r="3.5" fill="#FDE68A"/>
+            <circle cx="250" cy="29" r="3.5" fill="#FDE68A"/>
+            <circle cx="320" cy="24" r="3.5" fill="#FDE68A"/>
+            <!-- Mesa gourmet -->
+            <ellipse cx="200" cy="86" rx="75" ry="18" fill="#FAF3F4"/>
+            <rect x="197" y="58" width="6" height="22" fill="#FBBF24"/>
+            <circle cx="200" cy="54" r="5" fill="#FEF08A"/>
+            <!-- Copas -->
+            <path d="M170,66 L176,66 L173,78 Z" fill="#F5E4E8"/>
+            <path d="M224,66 L230,66 L227,78 Z" fill="#F5E4E8"/>
+          </svg>
+        `;
+      }
+      if (type === 'pedida') {
+        return `
+          <svg viewBox="0 0 400 110" class="w-full h-24 object-cover rounded-xl bg-[#270D17]" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="110" fill="#270D17"/>
+            <!-- Arco de flores y luces -->
+            <path d="M135,95 A65,65 0 0,1 265,95" fill="none" stroke="#BE3455" stroke-width="10"/>
+            <path d="M135,95 A65,65 0 0,1 265,95" fill="none" stroke="#FDE68A" stroke-width="2" stroke-dasharray="3 6"/>
+            <!-- Corazón central -->
+            <text x="200" y="68" text-anchor="middle" font-size="24" fill="#FDE68A">♥</text>
+            <text x="200" y="92" text-anchor="middle" font-size="11" font-weight="bold" fill="#FAF3F4" letter-spacing="2">MARRY ME</text>
+          </svg>
+        `;
+      }
+      // Vehículo Ejecutivo (Pantalla 4)
+      return `
+        <svg viewBox="0 0 400 96" class="w-full h-20 object-cover rounded-xl bg-[#231218]" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="96" fill="#231218"/>
+          <!-- Luces nocturnas ciudad -->
+          <circle cx="50" cy="25" r="14" fill="#FBBF24" opacity="0.25"/>
+          <circle cx="110" cy="22" r="10" fill="#BE3455" opacity="0.3"/>
+          <circle cx="310" cy="24" r="16" fill="#FBBF24" opacity="0.25"/>
+          <circle cx="360" cy="30" r="10" fill="#FDE68A" opacity="0.2"/>
+          <!-- Silueta Sedán Ejecutivo -->
+          <path d="M95,68 L115,44 Q165,36 235,38 L275,50 L308,54 Q316,58 314,68 Z" fill="#12090C" stroke="#7A1C33" stroke-width="1.5"/>
+          <!-- Ventanas iluminadas -->
+          <path d="M132,46 L168,41 L168,52 L124,52 Z" fill="#F5E4E8" opacity="0.85"/>
+          <path d="M174,41 L226,42 L245,52 L174,52 Z" fill="#F5E4E8" opacity="0.85"/>
+          <!-- Faro delantero -->
+          <ellipse cx="310" cy="58" rx="4" ry="2.5" fill="#FEF08A"/>
+          <!-- Ruedas -->
+          <circle cx="142" cy="68" r="11" fill="#090406" stroke="#9E2A47" stroke-width="2"/>
+          <circle cx="272" cy="68" r="11" fill="#090406" stroke="#9E2A47" stroke-width="2"/>
+          <!-- Calle -->
+          <line x1="0" y1="80" x2="400" y2="80" stroke="#7A1C33" stroke-width="2"/>
+        </svg>
+      `;
+    }
+
+    // =====================================================================
+    // RENDERIZADO DE LAS 4 PANTALLAS OBLIGATORIAS + PERFIL
+    // =====================================================================
+    function renderScreen() {
+      const viewport = document.getElementById('phoneViewport');
+      const statusTime = document.getElementById('statusBarTime');
+
+      // En Pantalla 4 ('En Vivo'), la barra de estado marca 19:22 igual que en tu diseño
+      statusTime.textContent = appState.currentScreen === 'envivo' ? '19:22' : '9:41';
+
+      if (appState.currentScreen === 'explorar') {
+        viewport.innerHTML = renderDescubreScreen();
+      } else if (appState.currentScreen === 'personaliza') {
+        viewport.innerHTML = renderPersonalizaScreen();
+      } else if (appState.currentScreen === 'confirma') {
+        viewport.innerHTML = renderConfirmaScreen();
+      } else if (appState.currentScreen === 'envivo') {
+        viewport.innerHTML = renderEnVivoScreen();
+      } else {
+        viewport.innerHTML = renderPerfilScreen();
+      }
+
+      updateNavigationUI();
+      updatePresenterPanel();
+    }
+
+    // ---------------------------------------------------------------------
+    // PANTALLA 1: DESCUBRE (Tab Explorar)
+    // ---------------------------------------------------------------------
+    function renderDescubreScreen() {
+      const categories = ['Miradores', 'Cenas', 'Picnic', 'Pedidas'];
+      // Ordenar tours poniendo primero los que coinciden con la categoría seleccionada
+      const filteredTours = [...appState.tours].sort((a, b) => {
+        if (a.category === appState.activeCategory && b.category !== appState.activeCategory) return -1;
+        if (b.category === appState.activeCategory && a.category !== appState.activeCategory) return 1;
+        return 0;
+      });
+
+      const primaryTour = filteredTours[0];
+
+      return `
+        <div class="screen-enter flex flex-col gap-3 pt-1">
+          <!-- Header: Badge '♥ Descubre' y selector 'Tu Ciudad ▾' -->
+          <div class="flex items-center justify-between relative">
+            <span class="inline-flex items-center gap-1.5 bg-burgundy text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+              <span>♥</span> Descubre
+            </span>
+
+            <div class="relative">
+              <button
+                onclick="toggleCityMenu()"
+                class="inline-flex items-center gap-1 text-burgundy font-bold text-xs px-2.5 py-1.5 rounded-xl hover:bg-burgundy-soft transition"
+              >
+                <span>${appState.city}</span>
+                <span>▾</span>
+              </button>
+
+              ${appState.cityMenuOpen ? `
+                <div class="absolute right-0 mt-1 w-36 bg-white border border-burgundy/25 rounded-2xl shadow-lg py-1 z-30">
+                  ${appState.cities.map(c => `
+                    <button
+                      onclick="selectCity('${c}')"
+                      class="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-cream flex items-center justify-between ${appState.city === c ? 'text-burgundy font-bold bg-burgundy-soft/50' : 'text-ink'}"
+                    >
+                      <span>${c}</span>
+                      ${appState.city === c ? '<span>✓</span>' : ''}
+                    </button>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Barra de búsqueda/filtro -->
+          <button
+            onclick="openOccasionFilter()"
+            class="w-full bg-cream-card border border-burgundy/30 rounded-full px-3.5 py-2 flex items-center justify-between text-left hover:border-burgundy transition shadow-2xs"
+          >
+            <span class="text-xs text-burgundy font-medium truncate">
+              ✨ ${appState.searchOccasion ? `Ocasión: ${appState.searchOccasion}` : '¿Qué momento especial celebran?'}
+            </span>
+            <span class="text-xs font-bold text-burgundy pl-2 border-l border-burgundy/20">
+              Filtros
+            </span>
+          </button>
+
+          <!-- Chips de categorías interactivos -->
+          <div class="grid grid-cols-4 gap-1.5">
+            ${categories.map(cat => {
+              const isActive = appState.activeCategory === cat;
+              return `
+                <button
+                  onclick="selectCategory('${cat}')"
+                  class="py-1.5 px-1 rounded-xl text-xs font-bold transition text-center border ${
+                    isActive
+                      ? 'bg-burgundy text-white border-burgundy shadow-xs'
+                      : 'bg-cream-card text-burgundy border-burgundy/25 hover:bg-burgundy-soft/50'
+                  }"
+                >
+                  ${cat}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Tarjetas de Experiencias (2 visibles principales como en el wireframe) -->
+          <div class="space-y-2.5">
+            ${filteredTours.slice(0, 2).map(tour => {
+              const isSelected = appState.selectedTourId === tour.id;
+              return `
+                <article
+                  onclick="selectTourCard('${tour.id}')"
+                  class="cursor-pointer bg-cream-card rounded-2xl p-2.5 border transition ${
+                    isSelected
+                      ? 'border-burgundy ring-1 ring-burgundy/30 shadow-sm'
+                      : 'border-burgundy/25 hover:border-burgundy/60'
+                  }"
+                >
+                  ${getSceneIllustration(tour.sceneType)}
+
+                  <div class="mt-2 flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <h3 class="text-[13px] font-bold text-ink truncate">${tour.title}</h3>
+                      <p class="text-[11px] text-ink-muted truncate">${tour.subtitle}</p>
+                    </div>
+
+                    <div class="flex flex-col items-end shrink-0">
+                      <span class="text-[11px] font-bold text-amber-600 flex items-center gap-0.5">
+                        ★ <span class="text-ink">${tour.rating}</span> <span class="text-ink-muted font-normal">(${tour.reviews})</span>
+                      </span>
+                      <span class="mt-0.5 bg-burgundy-soft text-burgundy text-[11px] font-bold px-2 py-0.5 rounded-lg">
+                        Desde $${tour.basePrice}
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Botón principal borgoña -->
+          <button
+            onclick="startCustomizing('${primaryTour.id}')"
+            class="mt-0.5 w-full bg-burgundy hover:bg-burgundy-dark text-white font-bold text-xs py-3 px-4 rounded-2xl shadow-md transition active:scale-[0.99] flex items-center justify-center gap-1.5"
+          >
+            <span>${getSelectedTour().ctaLabel}</span>
+          </button>
+        </div>
+      `;
+    }
+
+    // ---------------------------------------------------------------------
+    // PANTALLA 2: PERSONALIZA (Tab Armar - Paso 2 de 3)
+    // ---------------------------------------------------------------------
+    function renderPersonalizaScreen() {
+      const total = calculateTotal();
+
+      const toggleItems = [
+        {
+          key: 'transport',
+          icon: '🚘',
+          title: 'Transporte Puerta a Puerta',
+          desc: 'Auto privado ambientado (ida y vuelta)',
+          active: appState.addons.transport
+        },
+        {
+          key: 'decor',
+          icon: '🕯️',
+          title: 'Decoración & Pétalos',
+          desc: 'Velas, ramo de rosas y tarjeta dedicatoria',
+          active: appState.addons.decor
+        },
+        {
+          key: 'dinner',
+          icon: '🥂',
+          title: 'Cena 3 Tiempos + Brindis',
+          desc: 'Menú gourmet para 2 + copa de espumante',
+          active: appState.addons.dinner
+        },
+        {
+          key: 'photos',
+          icon: '📸',
+          title: 'Sesión de Fotos (15 min)',
+          desc: 'Recuerdo profesional (+$15)',
+          active: appState.addons.photos
+        }
+      ];
+
+      return `
+        <div class="screen-enter flex flex-col gap-2.5 pt-1">
+          <!-- Header: Badge '♥ Personaliza' + 'Paso 2 de 3' -->
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 bg-burgundy text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+              <span>♥</span> Personaliza
+            </span>
+            <span class="text-xs font-semibold text-burgundy">Paso 2 de 3</span>
+          </div>
+
+          <!-- Barra de progreso al 66% -->
+          <div class="w-full h-1.5 bg-burgundy-soft rounded-full overflow-hidden">
+            <div class="h-full bg-burgundy rounded-full transition-all duration-300" style="width: 66%;"></div>
+          </div>
+
+          <!-- Título -->
+          <h2 class="text-[15px] font-extrabold text-ink tracking-tight">
+            Crea la atmósfera perfecta
+          </h2>
+
+          <!-- Lista de Toggles Interactivos (SÍ / NO) -->
+          <div class="space-y-2">
+            ${toggleItems.map(item => `
+              <div
+                onclick="toggleAddon('${item.key}')"
+                class="cursor-pointer rounded-2xl px-3 py-2.5 border transition flex items-center justify-between gap-2 ${
+                  item.active
+                    ? 'bg-burgundy-soft/75 border-burgundy/40'
+                    : 'bg-cream-card border-burgundy/20 hover:border-burgundy/40'
+                }"
+              >
+                <div class="min-w-0 pr-1">
+                  <p class="text-xs font-bold text-ink flex items-center gap-1.5">
+                    <span>${item.icon}</span>
+                    <span class="truncate">${item.title}</span>
+                  </p>
+                  <p class="text-[11px] text-ink-muted leading-snug mt-0.5">
+                    ${item.desc}
+                  </p>
+                </div>
+
+                <!-- Botón circular SÍ / NO -->
+                <button
+                  type="button"
+                  aria-pressed="${item.active}"
+                  class="w-10 h-7 rounded-full text-[11px] font-extrabold transition shrink-0 flex items-center justify-center border ${
+                    item.active
+                      ? 'bg-burgundy text-white border-burgundy shadow-xs'
+                      : 'bg-white text-burgundy border-burgundy/35'
+                  }"
+                >
+                  ${item.active ? 'SÍ' : 'NO'}
+                </button>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Selectores interactivos de Fecha y Hora -->
+          <div class="grid grid-cols-2 gap-2 pt-0.5">
+            <button
+              onclick="cycleDate()"
+              class="bg-cream-card border border-burgundy/25 hover:border-burgundy rounded-xl px-2.5 py-2 text-left transition"
+            >
+              <span class="text-[11px] text-ink-muted">Fecha: </span>
+              <span class="text-[11px] font-bold text-ink">${appState.date}</span>
+            </button>
+
+            <button
+              onclick="cycleTime()"
+              class="bg-cream-card border border-burgundy/25 hover:border-burgundy rounded-xl px-2.5 py-2 text-left transition"
+            >
+              <span class="text-[11px] text-ink-muted">Hora cita: </span>
+              <span class="text-[11px] font-bold text-ink">${appState.time}</span>
+            </button>
+          </div>
+
+          <!-- Botón dinámico borgoña con total actualizado -->
+          <button
+            onclick="navigateTo('confirma')"
+            class="mt-1 w-full bg-burgundy hover:bg-burgundy-dark text-white font-bold text-xs py-3 px-4 rounded-2xl shadow-md transition active:scale-[0.99]"
+          >
+            Ver mi Velada Lista ($${total}) →
+          </button>
+        </div>
+      `;
+    }
+
+    // ---------------------------------------------------------------------
+    // PANTALLA 3: CONFIRMA (Tab Armar - Paso 3 de 3)
+    // ---------------------------------------------------------------------
+    function renderConfirmaScreen() {
+      const tour = getSelectedTour();
+      const total = calculateTotal();
+
+      return `
+        <div class="screen-enter flex flex-col gap-2.5 pt-1">
+          <!-- Header: Badge '♥ Confirma' + 'Paso 3 de 3' -->
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 bg-burgundy text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+              <span>♥</span> Confirma
+            </span>
+            <span class="text-xs font-semibold text-burgundy">Paso 3 de 3</span>
+          </div>
+
+          <!-- Barra de progreso al 100% -->
+          <div class="w-full h-1.5 bg-burgundy-soft rounded-full overflow-hidden">
+            <div class="h-full bg-burgundy rounded-full transition-all duration-300" style="width: 100%;"></div>
+          </div>
+
+          <!-- Título -->
+          <h2 class="text-[15px] font-extrabold text-ink tracking-tight">
+            Todo listo para sorprender
+          </h2>
+
+          <!-- Tabla Resumen Sincronizada -->
+          <div class="bg-cream-card border border-burgundy/25 rounded-2xl overflow-hidden text-xs">
+            <div class="bg-burgundy-soft/60 px-3 py-2 flex items-center justify-between font-bold text-burgundy border-b border-burgundy/20">
+              <span>Detalle de tu Experiencia</span>
+              <span>Valor</span>
+            </div>
+
+            <div class="divide-y divide-burgundy/15 px-3">
+              <div class="py-2 flex items-center justify-between">
+                <span class="text-ink"><b>${tour.title}</b> (${tour.duration})</span>
+                <span class="font-semibold text-ink">$${tour.basePrice.toFixed(2)}</span>
+              </div>
+
+              <div class="py-2 flex items-center justify-between">
+                <span class="text-ink-muted">Chofer privado ida y vuelta</span>
+                <span class="font-semibold text-ink">${appState.addons.transport ? '$15.00' : '$0.00'}</span>
+              </div>
+
+              <div class="py-2 flex items-center justify-between">
+                <span class="text-ink-muted">
+                  ${appState.addons.decor || appState.addons.dinner ? 'Velas, rosas + Cena 2 personas' : 'Ambientación base'}
+                </span>
+                <span class="font-semibold text-burgundy">Incluido</span>
+              </div>
+
+              ${appState.addons.photos ? `
+                <div class="py-2 flex items-center justify-between bg-burgundy-soft/25 -mx-3 px-3">
+                  <span class="text-ink">📸 Sesión de Fotos (15 min)</span>
+                  <span class="font-semibold text-ink">$15.00</span>
+                </div>
+              ` : ''}
+
+              <div class="py-2.5 flex items-center justify-between">
+                <span class="font-extrabold text-ink">Total Todo Incluido</span>
+                <span class="bg-burgundy-soft text-burgundy font-extrabold px-2.5 py-0.5 rounded-lg">
+                  $${total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector Lugar de recogida (GPS) editable -->
+          <div
+            onclick="openEditAddressModal()"
+            class="cursor-pointer bg-cream-card border border-burgundy/25 hover:border-burgundy rounded-2xl p-2.5 flex items-center justify-between gap-2 transition"
+          >
+            <div class="min-w-0">
+              <p class="text-[11px] font-bold text-ink flex items-center gap-1">
+                <span>📍</span> Lugar de recogida (GPS):
+              </p>
+              <p class="text-[11px] text-ink-muted truncate mt-0.5">
+                ${appState.pickupAddress} • <span class="text-burgundy font-bold underline">[Ajustar pin]</span>
+              </p>
+            </div>
+            <span class="text-burgundy text-xs">♥</span>
+          </div>
+
+          <!-- Botón principal: Reservar Velada en 1 Toque -->
+          <button
+            onclick="confirmReservation()"
+            class="w-full bg-burgundy hover:bg-burgundy-dark text-white font-bold text-xs py-3 px-4 rounded-2xl shadow-md transition active:scale-[0.99]"
+          >
+            ✓ Reservar Velada en 1 Toque
+          </button>
+
+          <!-- Botón secundario con borde borgoña: WhatsApp -->
+          <button
+            onclick="openWhatsAppModal()"
+            class="w-full bg-white hover:bg-burgundy-soft/40 text-burgundy border border-burgundy/45 font-bold text-xs py-2.5 px-4 rounded-2xl transition active:scale-[0.99]"
+          >
+            Personalizar detalle por WhatsApp
+          </button>
+        </div>
+      `;
+    }
+
+    // ---------------------------------------------------------------------
+    // PANTALLA 4: EN VIVO (Tab Mis Tours)
+    // ---------------------------------------------------------------------
+    function renderEnVivoScreen() {
+      const timelineSteps = [
+        { time: '19:30', label: 'Recogida en puerta', sub: '(En camino)' },
+        { time: '20:00', label: 'Llegada a Mirador', sub: '(Velas encendidas)' },
+        { time: '21:15', label: 'Cena y brindis', sub: '(Todo pagado)' },
+        { time: '23:30', label: 'Regreso seguro a casa', sub: '' }
+      ];
+
+      const etaTexts = [
+        'Tu chofer llega en 8 minutos',
+        'En ruta al Mirador (12 min)',
+        'Disfrutando Cena Romántica',
+        'Velada completada con éxito'
+      ];
+
+      return `
+        <div class="screen-enter flex flex-col gap-2.5 pt-1">
+          <!-- Header: Badge '♥ En Vivo' + '• Tu cita hoy' -->
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 bg-burgundy text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+              <span>♥</span> En Vivo
+            </span>
+            <span class="text-xs font-bold text-burgundy flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-burgundy animate-ping"></span>
+              • Tu cita hoy
+            </span>
+          </div>
+
+          <!-- Título dinámico según el paso activo -->
+          <h2 class="text-[15px] font-extrabold text-ink tracking-tight">
+            ${etaTexts[appState.liveStepIndex]}
+          </h2>
+
+          <!-- Tarjeta de Vehículo Ejecutivo -->
+          <div class="bg-cream-card border border-burgundy/25 rounded-2xl p-2.5 space-y-2">
+            ${getSceneIllustration('car')}
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-burgundy">Vehículo Ejecutivo Asignado</span>
+              <span class="bg-burgundy-soft text-burgundy text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg">
+                ${appState.liveStepIndex === 0 ? 'A 1.2 km' : appState.liveStepIndex === 1 ? 'En sitio' : 'Activo'}
+              </span>
+            </div>
+          </div>
+
+          <!-- Timeline Interactivo (clic para simular progreso) -->
+          <div class="bg-cream-card border border-burgundy/25 rounded-2xl divide-y divide-burgundy/15 overflow-hidden">
+            ${timelineSteps.map((step, idx) => {
+              const isCompleted = idx < appState.liveStepIndex;
+              const isCurrent = idx === appState.liveStepIndex;
+
+              let marker = '[ ]';
+              if (isCompleted) marker = '[✓]';
+              if (isCurrent) marker = '[•]';
+
+              return `
+                <button
+                  onclick="setLiveStep(${idx})"
+                  class="w-full px-3 py-2.5 text-left flex items-center gap-2.5 transition ${
+                    isCurrent ? 'bg-burgundy-soft/55' : 'hover:bg-cream'
+                  }"
+                >
+                  <span class="text-xs font-extrabold text-ink w-10 shrink-0">${step.time}</span>
+                  <span class="text-xs font-mono font-bold ${isCompleted || isCurrent ? 'text-burgundy' : 'text-ink-muted'}">
+                    ${marker}
+                  </span>
+                  <span class="text-xs ${isCurrent || isCompleted ? 'font-bold text-ink' : 'text-ink-muted'} truncate">
+                    ${step.label} <span class="font-normal text-ink-muted">${step.sub}</span>
+                  </span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Botón Asistencia Concierge Romántico 24/7 -->
+          <button
+            onclick="openConciergeModal()"
+            class="mt-0.5 w-full bg-white hover:bg-burgundy-soft/40 text-burgundy border border-burgundy/45 font-bold text-xs py-2.5 px-4 rounded-2xl transition active:scale-[0.99]"
+          >
+            Asistencia Concierge Romántico 24/7
+          </button>
+        </div>
+      `;
+    }
+
+    // ---------------------------------------------------------------------
+    // PANTALLA COMPLEMENTARIA: PERFIL
+    // ---------------------------------------------------------------------
+    function renderPerfilScreen() {
+      return `
+        <div class="screen-enter flex flex-col gap-3 pt-1">
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 bg-burgundy text-white text-xs font-bold px-3.5 py-1.5 rounded-full">
+              <span>♥</span> Mi Perfil
+            </span>
+            <span class="text-xs font-semibold text-burgundy">Nivel Romántico VIP</span>
+          </div>
+
+          <div class="bg-cream-card border border-burgundy/25 rounded-2xl p-3.5 flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-burgundy text-white flex items-center justify-center font-extrabold text-base">
+              AM
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-ink">Andrés & María</h3>
+              <p class="text-xs text-ink-muted">Aniversario: 21 de Noviembre</p>
+            </div>
+          </div>
+
+          <div class="bg-cream-card border border-burgundy/25 rounded-2xl divide-y divide-burgundy/15 text-xs">
+            <div class="p-3 flex justify-between">
+              <span class="text-ink-muted">Ciudad predeterminada</span>
+              <span class="font-bold text-burgundy">${appState.city}</span>
+            </div>
+            <div class="p-3 flex justify-between">
+              <span class="text-ink-muted">Preferencia musical en auto</span>
+              <span class="font-bold text-ink">Acústico & Boleros</span>
+            </div>
+            <div class="p-3 flex justify-between">
+              <span class="text-ink-muted">Tours completados</span>
+              <span class="font-bold text-ink">3 Veladas</span>
+            </div>
+          </div>
+
+          <button
+            onclick="navigateTo('explorar')"
+            class="w-full bg-burgundy text-white font-bold text-xs py-3 rounded-2xl shadow-sm"
+          >
+            Planear Próxima Sorpresa →
+          </button>
+        </div>
+      `;
+    }
+
+    // =====================================================================
+    // ACCIONES INTERACTIVAS DENTRO DE LA APP
+    // =====================================================================
+    function navigateTo(screen) {
+      appState.currentScreen = screen;
+      appState.cityMenuOpen = false;
+      closeInnerModal();
+      renderScreen();
+    }
+
+    function stepScreen(delta) {
+      const order = ['explorar', 'personaliza', 'confirma', 'envivo'];
+      const currentIdx = order.indexOf(appState.currentScreen);
+      const nextIdx = (currentIdx + delta + order.length) % order.length;
+      navigateTo(order[nextIdx]);
+    }
+
+    function toggleCityMenu() {
+      appState.cityMenuOpen = !appState.cityMenuOpen;
+      renderScreen();
+    }
+
+    function selectCity(city) {
+      appState.city = city;
+      appState.cityMenuOpen = false;
+      renderScreen();
+      showPhoneToast(`Ciudad actualizada: ${city}`);
+    }
+
+    function selectCategory(category) {
+      appState.activeCategory = category;
+      const matchingTour = appState.tours.find(t => t.category === category);
+      if (matchingTour) {
+        appState.selectedTourId = matchingTour.id;
+      }
+      renderScreen();
+    }
+
+    function selectTourCard(tourId) {
+      appState.selectedTourId = tourId;
+      renderScreen();
+    }
+
+    function startCustomizing(tourId) {
+      appState.selectedTourId = tourId;
+      navigateTo('personaliza');
+    }
+
+    function toggleAddon(key) {
+      appState.addons[key] = !appState.addons[key];
+      renderScreen();
+      const total = calculateTotal();
+      showPhoneToast(`Total actualizado: $${total}`);
+    }
+
+    function cycleDate() {
+      const idx = (appState.datesList.indexOf(appState.date) + 1) % appState.datesList.length;
+      appState.date = appState.datesList[idx];
+      renderScreen();
+    }
+
+    function cycleTime() {
+      const idx = (appState.timesList.indexOf(appState.time) + 1) % appState.timesList.length;
+      appState.time = appState.timesList[idx];
+      renderScreen();
+    }
+
+    function confirmReservation() {
+      appState.liveStepIndex = 0;
+      navigateTo('envivo');
+      showPhoneToast('¡Velada reservada! Chofer asignado.');
+    }
+
+    function setLiveStep(idx) {
+      appState.liveStepIndex = idx;
+      renderScreen();
+      const labels = [
+        'Chofer en camino a tu puerta',
+        'Velas encendidas en el Mirador',
+        'Cena y brindis listos en mesa',
+        'Regreso seguro activado'
+      ];
+      showPhoneToast(labels[idx]);
+    }
+
+    // Modales internos dentro del teléfono
+    function openOccasionFilter() {
+      const occasions = ['Aniversario', 'Cumpleaños', 'Pedida de Mano', 'Cita Sorpresa'];
+      openInnerModal(`
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-burgundy">✨ ¿Qué momento especial celebran?</h4>
+            <button onclick="closeInnerModal()" class="text-xs font-bold text-ink-muted">✕</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            ${occasions.map(occ => `
+              <button
+                onclick="setOccasion('${occ}')"
+                class="py-2 px-3 rounded-xl border text-xs font-bold transition ${
+                  appState.searchOccasion === occ
+                    ? 'bg-burgundy text-white border-burgundy'
+                    : 'bg-white text-burgundy border-burgundy/25 hover:bg-burgundy-soft'
+                }"
+              >
+                ${occ}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function setOccasion(occ) {
+      appState.searchOccasion = occ;
+      if (occ === 'Pedida de Mano') {
+        appState.activeCategory = 'Pedidas';
+        appState.selectedTourId = 'pedida-secreta';
+      }
+      closeInnerModal();
+      renderScreen();
+      showPhoneToast(`Filtro aplicado: ${occ}`);
+    }
+
+    function openEditAddressModal() {
+      openInnerModal(`
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-burgundy">📍 Ajustar punto de recogida GPS</h4>
+            <button onclick="closeInnerModal()" class="text-xs font-bold text-ink-muted">✕</button>
+          </div>
+          <input
+            id="addressInput"
+            type="text"
+            value="${appState.pickupAddress}"
+            class="w-full text-xs bg-white border border-burgundy/30 rounded-xl px-3 py-2 text-ink focus:outline-none focus:border-burgundy"
+          />
+          <button
+            onclick="savePickupAddress()"
+            class="w-full bg-burgundy text-white text-xs font-bold py-2.5 rounded-xl"
+          >
+            Confirmar Ubicación
+          </button>
+        </div>
+      `);
+    }
+
+    function savePickupAddress() {
+      const val = document.getElementById('addressInput').value.trim();
+      if (val) {
+        appState.pickupAddress = val;
+      }
+      closeInnerModal();
+      renderScreen();
+      showPhoneToast('Pin GPS actualizado');
+    }
+
+    function openWhatsAppModal() {
+      const tour = getSelectedTour();
+      openInnerModal(`
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-burgundy">💬 Mensaje directo a Concierge</h4>
+            <button onclick="closeInnerModal()" class="text-xs font-bold text-ink-muted">✕</button>
+          </div>
+          <div class="bg-white border border-burgundy/20 rounded-xl p-2.5 text-[11px] text-ink">
+            "Hola, quisiera añadir una canción especial o nota personalizada para mi <b>${tour.title}</b> el <b>${appState.date}</b>."
+          </div>
+          <button
+            onclick="closeInnerModal(); showPhoneToast('Solicitud enviada al Concierge por WhatsApp');"
+            class="w-full bg-burgundy text-white text-xs font-bold py-2.5 rounded-xl"
+          >
+            Enviar solicitud al asesor
+          </button>
+        </div>
+      `);
+    }
+
+    function openConciergeModal() {
+      openInnerModal(`
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-burgundy">♥ Concierge Romántico 24/7</h4>
+            <button onclick="closeInnerModal()" class="text-xs font-bold text-ink-muted">✕</button>
+          </div>
+          <p class="text-[11px] text-ink-muted">
+            Tu anfitriona asignada es <b>Camila</b>. Todo está coordinado con el mirador y el chofer.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              onclick="closeInnerModal(); showPhoneToast('Llamando al chofer privado...');"
+              class="bg-burgundy text-white text-xs font-bold py-2 rounded-xl"
+            >
+              📞 Llamar Chofer
+            </button>
+            <button
+              onclick="closeInnerModal(); showPhoneToast('Mensaje enviado a Camila');"
+              class="bg-white border border-burgundy/30 text-burgundy text-xs font-bold py-2 rounded-xl"
+            >
+              ✉️ Chat Rápido
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function openInnerModal(html) {
+      const modal = document.getElementById('phoneInnerModal');
+      const content = document.getElementById('phoneInnerModalContent');
+      content.innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+
+    function closeInnerModal() {
+      document.getElementById('phoneInnerModal').classList.add('hidden');
+    }
+
+    let toastTimer = null;
+    function showPhoneToast(msg) {
+      const toast = document.getElementById('phoneToast');
+      const toastMsg = document.getElementById('phoneToastMsg');
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2100);
+    }
+
+    // Actualizar estilos activos en la barra inferior y botones superiores
+    function updateNavigationUI() {
+      const mapScreenToTab = {
+        explorar: 'nav-explorar',
+        personaliza: 'nav-armar',
+        confirma: 'nav-armar',
+        envivo: 'nav-mistours',
+        perfil: 'nav-perfil'
+      };
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.classList.remove('font-extrabold', 'text-burgundy');
+        btn.classList.add('font-medium', 'text-burgundy/80');
+        const line = btn.querySelector('.nav-line');
+        if (line) {
+          line.classList.remove('bg-burgundy');
+          line.classList.add('bg-transparent');
+        }
+      });
+
+      const activeTabId = mapScreenToTab[appState.currentScreen];
+      const activeBtn = document.getElementById(activeTabId);
+      if (activeBtn) {
+        activeBtn.classList.remove('font-medium', 'text-burgundy/80');
+        activeBtn.classList.add('font-extrabold', 'text-burgundy');
+        const line = activeBtn.querySelector('.nav-line');
+        if (line) {
+          line.classList.remove('bg-transparent');
+          line.classList.add('bg-burgundy');
+        }
+      }
+
+      // Saltos rápidos de la barra superior
+      ['explorar', 'personaliza', 'confirma', 'envivo'].forEach(id => {
+        const qBtn = document.getElementById(`quick-${id}`);
+        if (!qBtn) return;
+        if (appState.currentScreen === id) {
+          qBtn.classList.add('bg-burgundy', 'text-white', 'shadow-2xs');
+          qBtn.classList.remove('text-burgundy', 'hover:bg-burgundy-soft/60');
+        } else {
+          qBtn.classList.remove('bg-burgundy', 'text-white', 'shadow-2xs');
+          qBtn.classList.add('text-burgundy', 'hover:bg-burgundy-soft/60');
+        }
+      });
+    }
+
+    function updatePresenterPanel() {
+      const note = presenterNotes[appState.currentScreen] || presenterNotes.explorar;
+      document.getElementById('presenterScreenTitle').textContent = note.title;
+      document.getElementById('presenterStepBadge').textContent = note.badge;
+      document.getElementById('presenterPitchText').textContent = note.pitch;
+      document.getElementById('presenterActionsList').innerHTML = note.actions
+        .map(item => `<li>${item}</li>`)
+        .join('');
+    }
+
+    // =====================================================================
+    // HERRAMIENTAS EXTERNAS: QR EN VIVO, GUÍA Y MODO PROYECTOR
+    // =====================================================================
+    let qrInstance = null;
+
+    function generateQRCode(urlText) {
+      const canvas = document.getElementById('qrCanvas');
+      const fallbackUrl = window.location.href.startsWith('http')
+        ? window.location.href
+        : 'https://tours-romanticos-prototipo.app';
+      const targetValue = (urlText && urlText.trim()) ? urlText.trim() : fallbackUrl;
+
+      if (!qrInstance && typeof QRious !== 'undefined') {
+        qrInstance = new QRious({
+          element: canvas,
+          size: 200,
+          foreground: '#7A1C33',
+          background: '#FFFFFF',
+          level: 'H',
+          value: targetValue
+        });
+      } else if (qrInstance) {
+        qrInstance.value = targetValue;
+      }
+    }
+
+    function downloadQR() {
+      const canvas = document.getElementById('qrCanvas');
+      const link = document.createElement('a');
+      link.download = 'QR-Tours-Romanticos-Expo.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      if (id === 'qrModal') {
+        const input = document.getElementById('qrUrlInput');
+        if (!input.value) {
+          input.value = window.location.href.startsWith('http')
+            ? window.location.href
+            : 'https://tours-romanticos-prototipo.app';
+        }
+        generateQRCode(input.value);
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function toggleCleanMode() {
+      document.body.classList.toggle('presentation-clean');
+      const isClean = document.body.classList.contains('presentation-clean');
+      document.getElementById('cleanModeLabel').textContent = isClean ? 'Mostrar Guión' : 'Modo Proyector';
+    }
+
+    // Inicialización al cargar la página
+    window.addEventListener('DOMContentLoaded', () => {
+      renderScreen();
+      generateQRCode();
+    });
+  </script>
+</body>
+</html>
